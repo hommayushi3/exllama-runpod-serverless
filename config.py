@@ -7,3 +7,5 @@ quantize_config = BaseQuantizeConfig(
         group_size=1,  # it is recommended to set the value to 128
         desc_act=False,  # set to False can significantly speed up inference but the perplexity may slightly bad
     )
+
+model_basename = "Guanaco-7B-GPTQ-4bit-128g.no-act-order"
