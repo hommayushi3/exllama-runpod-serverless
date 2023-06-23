@@ -17,4 +17,4 @@ class Predictor:
         
     def predict(self, context, prompt):
         
-        return pipeline(f"{context}{prompt}")[0]["generated_text"]
+        return self.pipeline(f"{context}{prompt}")[0]["generated_text"]
