@@ -1,5 +1,3 @@
 from auto_gptq import BaseQuantizeConfig
 
-model_dir = "guanaco-65B-GPTQ"
-
-model_basename = " Guanaco-65B-GPTQ-4bit.act-order"
+model_name = "TheBloke/guanaco-65B-GPTQ"
