@@ -1,0 +1,1 @@
+docker run -i --gpus all guanaco_runpod
