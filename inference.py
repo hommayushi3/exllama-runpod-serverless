@@ -11,7 +11,7 @@ class Predictor:
         self.tokenizer = AutoTokenizer.from_pretrained(f"{model_name}", use_fast=True)
         
         print("Loading model...")
-        self.model = AutoGPTQForCausalLM.from_quantized(f"{model_name}", model_basename=model_basename, device="cuda:0", use_safetensors=True, use_triton=True)
+        self.model = AutoGPTQForCausalLM.from_quantized(f"{model_name}", device="cuda:0", use_safetensors=True, use_triton=True)
         
         self.pipeline = TextGenerationPipeline(model=self.model, tokenizer=self.tokenizer, max_length=1000)
         
