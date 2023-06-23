@@ -11,7 +11,7 @@ RUN ./git-lfs-3.3.0/install.sh
 RUN rm -rf git-lfs-3.3.0/
 
 # Fetch the model
-RUN git clone --progress https://huggingface.co/TheBloke/guanaco-7B-GPTQ
+RUN git clone --progress https://huggingface.co/TheBloke/guanaco-65B-GPTQ
 
 # Install Python dependencies (Worker Template)
 RUN pip install --upgrade pip && \
