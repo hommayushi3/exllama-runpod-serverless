@@ -1,6 +1,6 @@
 from transformers import AutoTokenizer, TextGenerationPipeline
 from auto_gptq import AutoGPTQForCausalLM
-from config import model_name, model_basename
+from config import model_name, model_basename, generation_config
 import logging
 
 class Predictor:
