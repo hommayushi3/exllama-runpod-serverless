@@ -16,7 +16,10 @@ RUN rm -rf git-lfs-3.3.0/
 
 # Install Python dependencies (Worker Template)
 RUN pip install --upgrade pip && \
-    pip install auto-gptq[triton] transformers runpod
+    pip install safetensors==0.3.1 sentencepiece ninja
+RUN git clone https://github.com/turboderp/exllama
+RUN pip install -r exllama/requirements.txt
+RUN pip install -e exllama/
 
 COPY handler.py /data/handler.py
 COPY schema.py /data/schema.py
