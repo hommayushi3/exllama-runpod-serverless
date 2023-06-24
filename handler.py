@@ -9,7 +9,6 @@ from runpod.serverless.utils.rp_validator import validate
 
 from schema import INPUT_SCHEMA
 
-
 MODEL = inference.Predictor()
 MODEL.setup()
 
@@ -28,7 +27,6 @@ def run(job):
     validated_input = validated_input['validated_input']
 
     result = MODEL.predict(
-        context=validated_input["context"],
         prompt=validated_input["prompt"]
     )
 

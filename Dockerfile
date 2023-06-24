@@ -16,14 +16,16 @@ RUN rm -rf git-lfs-3.3.0/
 
 # Install Python dependencies (Worker Template)
 RUN pip install --upgrade pip && \
-    pip install safetensors==0.3.1 sentencepiece ninja
+    pip install safetensors==0.3.1 sentencepiece ninja huggingface_hub runpod numpy
 RUN git clone https://github.com/turboderp/exllama
 RUN pip install -r exllama/requirements.txt
-RUN pip install -e exllama/
 
 COPY handler.py /data/handler.py
 COPY schema.py /data/schema.py
 COPY config.py /data/config.py
 COPY inference.py /data/inference.py
+COPY __init.py__ /data/__init__.py
 
-CMD [ "python", "-u", "/data/handler.py" ]
+ENV PYTHONPATH=/data/exllama
+
+CMD [ "python", "-m", "handler" ]
