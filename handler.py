@@ -36,9 +36,6 @@ def run(job):
             "result": result
         }
 
-    # Remove downloaded input objects
-    rp_cleanup.clean(['input_objects'])
-
     return job_output
 
 
