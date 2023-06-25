@@ -1,3 +1,4 @@
+import torch
 from config import repo_name, model_name, model_basename, max_new_tokens, token_repetition_penalty_max, temperature, top_p, top_k, typical
 from huggingface_hub import snapshot_download
 import logging, os, glob
@@ -46,3 +47,30 @@ class Predictor:
     def predict(self, prompt):
         
         return self.generator.generate_simple(prompt, max_new_tokens = max_new_tokens)
+    
+    def generate_to_eos(self, prompt):
+        
+        self.generator.end_beam_search()
+
+        ids = self.tokenizer.encode(prompt)
+        num_res_tokens = ids.shape[-1]  # Decode from here
+        self.generator.gen_begin(ids)
+
+        self.generator.begin_beam_search()
+        
+        res_line = prompt
+        for i in range(max_new_tokens):
+            gen_token = self.generator.beam_search()
+            if gen_token.item() == self.tokenizer.eos_token_id:
+                self.generator.replace_last_token(self.tokenizer.newline_token_id)
+                break
+            if gen_token.item() == self.tokenizer.eos_token_id: break
+
+            num_res_tokens += 1
+            text = self.tokenizer.decode(self.generator.sequence_actual[:, -num_res_tokens:][0])
+            if text.endswith(f"###"):
+                plen = self.tokenizer.encode(f"###").shape[-1]
+                self.generator.gen_rewind(plen)
+                return text
+
+        return text
