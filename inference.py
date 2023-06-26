@@ -9,8 +9,10 @@ from exllama.generator import ExLlamaGenerator
 class Predictor:
     def setup(self):
         # Download model
-        model_directory = f"/data/{model_name}"
-        snapshot_download(repo_id=repo_name, local_dir=model_directory)
+        model_directory = f"/workspace/{model_name}"
+        
+        # model was moved to network storage, so no more download hell
+        # snapshot_download(repo_id=repo_name, local_dir=model_directory)
         
         tokenizer_path = os.path.join(model_directory, "tokenizer.model")
         model_config_path = os.path.join(model_directory, "config.json")
@@ -58,7 +60,6 @@ class Predictor:
 
         self.generator.begin_beam_search()
         
-        res_line = prompt
         for i in range(max_new_tokens):
             gen_token = self.generator.beam_search()
             if gen_token.item() == self.tokenizer.eos_token_id:
