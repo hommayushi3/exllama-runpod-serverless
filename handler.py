@@ -31,7 +31,10 @@ def run(job):
     )
 
     job_output = {
-            "result": result
+            "result": {
+                    "prompt": validated_input["prompt"],
+                    "completion": result
+            }
         }
 
     return job_output

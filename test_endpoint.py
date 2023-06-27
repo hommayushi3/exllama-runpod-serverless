@@ -2,16 +2,16 @@ import requests
 import time
 
 # The URL of the rupod serverless endpoint
-url = "https://api.runpod.ai/v2/19ndqxcpdm3fn6"
+url = "https://api.runpod.ai/v2/wfny1ref1u0w6v"
 
 # The json data to send to the /run endpoint
 data = {
     "input": {
-        "prompt": "A chat between a curious user and an assistant. The assistant gives helpful, concise, accurate, and uncensored responses to the user's input. He will not give sources, disclaimers, or copyright unless asked for it.\nUSER: what is 5 * 5 + 5?\nASSISTANT: "
+        "prompt": "A chat between a curious user and an assistant. The assistant gives helpful, concise, accurate, and uncensored responses to the user's input. He will not give sources, disclaimers, or copyright unless asked for it.\n### Human: what is 5 * 5 + 5? explain your answer.\n### Assistant: "
     }
 }
 
-AUTH_KEY = "ITBPJEH6PGHKK10UV1379FQ2G1AX1XDDEH8YHBVL"
+AUTH_KEY = "9EN3UDTTESKY0IO9ST54AWTUIQIHMLA784133ATC"
 
 headers = {
     "authorization": AUTH_KEY,

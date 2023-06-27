@@ -54,16 +54,20 @@ class Predictor:
         ids = self.tokenizer.encode(prompt)
         num_res_tokens = ids.shape[-1]  # Decode from here
         self.generator.gen_begin(ids)
-
+        
+        text = ""
+        new_text = ""
+        
         self.generator.begin_beam_search()
         for i in range(max_new_tokens):
             gen_token = self.generator.beam_search()
             if gen_token.item() == self.tokenizer.eos_token_id:
-                return text
+                return new_text
 
             num_res_tokens += 1
             text = self.tokenizer.decode(self.generator.sequence_actual[:, -num_res_tokens:][0])
-            if text.lower().endswith(stop_sequence.lower()):
-                return text
+            new_text = text[len(prompt):]
+            if new_text.lower().endswith(stop_sequence.lower()):
+                return new_text[:-stop_sequence.len()]
 
-        return text
+        return new_text
