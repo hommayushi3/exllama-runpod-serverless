@@ -68,6 +68,6 @@ class Predictor:
             text = self.tokenizer.decode(self.generator.sequence_actual[:, -num_res_tokens:][0])
             new_text = text[len(prompt):]
             if new_text.lower().endswith(stop_sequence.lower()):
-                return new_text[:-stop_sequence.len()]
+                return new_text[:-len(stop_sequence)]
 
         return new_text
