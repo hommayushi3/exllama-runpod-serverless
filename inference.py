@@ -9,12 +9,7 @@ from exllama.generator import ExLlamaGenerator
 class Predictor:
     def setup(self):
         # Model moved to network storage
-        model_directory = f"/runpod-volume/{model_name}"
-        for item in os.scandir(f"/runpod-volume"):
-            if item.is_file():
-                print(f"File: {item.name}")
-            elif item.is_dir():
-                print(f"Directory: {item.name}")     
+        model_directory = f"/runpod-volume/{model_name}"  
                    
         # snapshot_download(repo_id=repo_name, local_dir=model_directory)
         tokenizer_path = os.path.join(model_directory, "tokenizer.model")
