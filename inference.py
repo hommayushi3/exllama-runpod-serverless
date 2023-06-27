@@ -12,7 +12,6 @@ class Predictor:
         model_directory = f"/runpod-volume/{model_name}"
                 
         # snapshot_download(repo_id=repo_name, local_dir=model_directory)
-        print()
         tokenizer_path = os.path.join(model_directory, "tokenizer.model")
         model_config_path = os.path.join(model_directory, "config.json")
         st_pattern = os.path.join(model_directory, "*.safetensors")
