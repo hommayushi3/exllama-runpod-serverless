@@ -1,5 +1,5 @@
 import torch
-from config import repo_name, model_name, model_basename, max_new_tokens, token_repetition_penalty_max, temperature, top_p, top_k, typical
+from config import repo_name, model_name, model_basename, max_new_tokens, token_repetition_penalty_max, temperature, top_p, top_k, stop_sequence
 from huggingface_hub import snapshot_download
 import logging, os, glob
 from exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
@@ -8,12 +8,11 @@ from exllama.generator import ExLlamaGenerator
 
 class Predictor:
     def setup(self):
-        # Download model
-        model_directory = f"/workspace/{model_name}"
-        
-        # model was moved to network storage, so no more download hell
+        # Model moved to network storage
+        model_directory = f"/runpod-volume/{model_name}"
+                
         # snapshot_download(repo_id=repo_name, local_dir=model_directory)
-        
+        print()
         tokenizer_path = os.path.join(model_directory, "tokenizer.model")
         model_config_path = os.path.join(model_directory, "config.json")
         st_pattern = os.path.join(model_directory, "*.safetensors")
@@ -44,11 +43,10 @@ class Predictor:
         self.generator.settings.temperature = temperature
         self.generator.settings.top_p = top_p
         self.generator.settings.top_k = top_k
-        self.generator.settings.typical = typical
         
     def predict(self, prompt):
         
-        return self.generator.generate_simple(prompt, max_new_tokens = max_new_tokens)
+        return self.generate_to_eos(prompt)
     
     def generate_to_eos(self, prompt):
         
@@ -59,19 +57,14 @@ class Predictor:
         self.generator.gen_begin(ids)
 
         self.generator.begin_beam_search()
-        
         for i in range(max_new_tokens):
             gen_token = self.generator.beam_search()
             if gen_token.item() == self.tokenizer.eos_token_id:
-                self.generator.replace_last_token(self.tokenizer.newline_token_id)
-                break
-            if gen_token.item() == self.tokenizer.eos_token_id: break
+                return text
 
             num_res_tokens += 1
             text = self.tokenizer.decode(self.generator.sequence_actual[:, -num_res_tokens:][0])
-            if text.endswith(f"###"):
-                plen = self.tokenizer.encode(f"###").shape[-1]
-                self.generator.gen_rewind(plen)
+            if text.lower().endswith(stop_sequence.lower()):
                 return text
 
         return text
