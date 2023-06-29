@@ -1,9 +1,9 @@
-repo_name = "TheBloke/guanaco-65B-GPTQ"
-model_name = "guanaco-65B-GPTQ"
-model_basename = "Guanaco-65B-GPTQ-4bit.act-order.safetensors"
+repo_name = "poisson-fish/ultralm-13b-GPTQ"
+model_name = "ultralm-13b-GPTQ"
+model_basename = "gptq_model-4bit-32g.safetensors"
 max_new_tokens = 1000
 token_repetition_penalty_max = 1.176470
-temperature = 0.4
+temperature = 0.1
 top_p = 0.1
 top_k = 40
-stop_sequence = "###"
+stop_sequence = "User:"
