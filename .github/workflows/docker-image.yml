@@ -18,7 +18,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
   build:
-
+    needs: login
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +27,7 @@ jobs:
       run: docker build . --file Dockerfile --tag udidifier/exllama-ultralm13
 
   push:
-
+    needs: build
     runs-on: ubuntu-latest
 
     steps:
