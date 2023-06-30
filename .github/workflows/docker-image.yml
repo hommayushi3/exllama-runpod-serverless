@@ -24,13 +24,4 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag udidifier/exllama-ultralm13
-
-  push:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v3
-    - name: Push the Docker image
-      run: docker push udidifier/exllama-ultralm13
+      run: docker build . --file Dockerfile --tag udidifier/exllama-ultralm13 && docker push udidifier/exllama-ultralm13
