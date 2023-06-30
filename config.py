@@ -1,6 +1,6 @@
 repo_name = "poisson-fish/ultralm-13b-GPTQ"
 model_name = "ultralm-13b-GPTQ"
-model_basename = "gptq_model-4bit-32g.safetensors"
+model_basename = "gptq_model-4bit-32g"
 max_new_tokens = 1000
 token_repetition_penalty_max = 1.176470
 temperature = 0.1
