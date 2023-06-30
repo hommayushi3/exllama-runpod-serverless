@@ -24,4 +24,22 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag udidifier/exllama-ultralm13 && docker push udidifier/exllama-ultralm13
+      run: docker build . --file Dockerfile --tag udidifier/exllama-ultralm13
+    - name: Save the Docker image as an artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: docker-image
+        path: /var/lib/docker
+        
+  push:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Load the Docker image from the artifact
+      uses: actions/download-artifact@v2
+      with:
+        name: docker-image
+        path: /var/lib/docker
+    - name: Push the Docker image
+      run: docker push udidifier/exllama-ultralm13
