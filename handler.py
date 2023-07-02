@@ -1,43 +1,56 @@
-''' infer.py for runpod worker '''
-
-import os
-import inference
-
+from model import ExLlama, ExLlamaCache, ExLlamaConfig
+from tokenizer import ExLlamaTokenizer
+from generator import ExLlamaGenerator
+import os, glob
+import logging
+from typing import Generator
 import runpod
-from runpod.serverless.utils import rp_download, rp_upload, rp_cleanup
-from runpod.serverless.utils.rp_validator import validate
+from huggingface_hub import snapshot_download
+from copy import copy
 
-from schema import INPUT_SCHEMA
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 
-MODEL = inference.Predictor()
-MODEL.setup()
+generator = None
+default_settings = None
 
+def load_model():
+    global generator, default_settings
 
-def run(job):
-    '''
-    Run inference on the model.
-    '''
-    job_input = job['input']
+    if not generator:
+        model_directory = snapshot_download(repo_id=os.environ["MODEL_REPO"])
+        tokenizer_path = os.path.join(model_directory, "tokenizer.model")
+        model_config_path = os.path.join(model_directory, "config.json")
+        st_pattern = os.path.join(model_directory, "*.safetensors")
+        model_path = glob.glob(st_pattern)[0]
 
-    # Input validation
-    validated_input = validate(job_input, INPUT_SCHEMA)
+        # Create config, model, tokenizer and generator
 
-    if 'errors' in validated_input:
-        return {"error": validated_input['errors']}
-    validated_input = validated_input['validated_input']
+        config = ExLlamaConfig(model_config_path)               # create config from config.json
+        config.model_path = model_path                          # supply path to model weights file
 
-    result = MODEL.predict(
-        prompt=validated_input["prompt"]
-    )
+        model = ExLlama(config)                                 # create ExLlama instance and load the weights
+        tokenizer = ExLlamaTokenizer(tokenizer_path)            # create tokenizer from tokenizer model file
 
-    job_output = {
-            "result": {
-                    "prompt": validated_input["prompt"],
-                    "completion": result
-            }
+        cache = ExLlamaCache(model)                             # create cache for inference
+        generator = ExLlamaGenerator(model, tokenizer, cache)   # create generator
+        default_settings = {
+            k: getattr(generator.settings, k) for k in dir(generator.settings) if k[:2] != '__'
         }
+    return generator
 
-    return job_output
 
+def inference(event) -> Generator[str, None, None]:
+    logging.info(event)
+    job_input = event["input"]
+    prompt: str = job_input.pop("prompt")
+    max_new_tokens = job_input.pop("max_new_tokens", 50)
 
-runpod.serverless.start({"handler": run})
+    settings = copy(default_settings)
+    settings.update(job_input)
+    for key, value in settings.items():
+        setattr(generator.settings, key, value)
+
+    output = generator.generate_simple(prompt, max_new_tokens = max_new_tokens)
+    yield output[len(prompt):]
+
+runpod.serverless.start({"handler": inference})
