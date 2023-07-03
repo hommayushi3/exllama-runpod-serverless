@@ -39,7 +39,7 @@ def load_model():
     return generator
 
 
-def inference(event) -> Generator[str, None, None]:
+def inference(event) -> str:
     logging.info(event)
     job_input = event["input"]
     prompt: str = job_input.pop("prompt")
@@ -51,6 +51,6 @@ def inference(event) -> Generator[str, None, None]:
         setattr(generator.settings, key, value)
 
     output = generator.generate_simple(prompt, max_new_tokens = max_new_tokens)
-    yield output[len(prompt):]
+    return output[len(prompt):]
 
 runpod.serverless.start({"handler": inference})
