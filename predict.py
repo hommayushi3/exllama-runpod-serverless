@@ -1,36 +1,3 @@
-# exllama-runpod-serverless
-## Summary
-This Docker image runs a Llama model on a serverless RunPod instance using the optimized [turboderp's exllama repo](https://github.com/turboderp/exllama). This [repo](https://github.com/hommayushi3/exllama-runpod-serverless) was implemented as a fork off of [poisson-fish's exllama-ultralm13 repo](https://github.com/poisson-fish/exllama-ultralm13).
-
-## Set Up
-1. Create a RunPod account and navigate to the [RunPod Serverless Console](https://www.runpod.io/console/serverless).
-2. Navigate to My Templates and click on the New Template button.
-3. Enter in the following fields and click on the Save Template button:
-    - Template Name: exllama-runpod-serverless
-    - Container Image: hommayushi3/exllama-runpod-serverless:latest
-    - Container Disk: A size large enough to store your libraries + your desired model in 4bit.
-        - 7B parameters -> 6GB
-        - 13B parameters -> 9GB
-        - 33B parameters -> 19GB
-        - 65GB parameters -> 35GB
-    - Environment Variables: (key, value) pairs
-        - (MODEL_REPO, 'TheBloke/airoboros-7B-gpt4-1.4-GPTQ') or any other repo for GPTQ Llama model. See https://huggingface.co/models?other=llama&sort=trending&search=thebloke+gptq for other models.
-        - optional - (PROMPT_PREFIX, 'USER: ')
-        - optional - (PROMPT_SUFFIX, ' ASSISTANT: ')
-4. Now click on My Endpoints and click on the New Endpoint button.
-5. Fill in the following fields and click on the Create button:
-    - Endpoint Name: exllama-runpod-serverless
-    - Select Template: exllama-runpod-serverless
-    - Min Provisioned Workers: 0
-    - Max Workers: 1
-    - Idle Timeout: 5
-    - Check the FlashBoot checkbox
-    - Use the Container Disk section of step 3 to determine the smallest GPU that can load the entire 4 bit model. In our example's case, use 16 GB GPU.
-
-## Inference Usage
-See the predict.py file for an example. For convenience we also copy the code below.
-
-```py
 import os
 import requests
 from time import sleep
@@ -105,10 +72,3 @@ if __name__ == '__main__':
 -sh:non-smoker,mariguana 5-6 months ago,3 beers on the weekend, basketball at school
 -sh:no std,no other significant medical conditions."""
     print(run(prompt))
-```
-
-Run the above code using the following command in terminal with the runpoint endpoint id assigned to your endpoint in step 5.
-```bash
-RUNPOD_AI_API_KEY='**************' RUNPOD_ENDPOINT_ID='*******' python predict.py
-```
-You can generate the API key [here](https://www.runpod.io/console/serverless/user/settings) under API Keys.

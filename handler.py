@@ -21,7 +21,6 @@ def load_model():
         model_path = glob.glob(st_pattern)[0]
 
         # Create config, model, tokenizer and generator
-
         config = ExLlamaConfig(model_config_path)               # create config from config.json
         config.model_path = model_path                          # supply path to model weights file
 
@@ -37,11 +36,13 @@ def load_model():
 
 generator = None
 default_settings = None
+prompt_prefix = os.getenv("PROMPT_PREFIX", "")
+prompt_suffix = os.getenv("PROMPT_SUFFIX", "")
 
 def inference(event) -> str:
     logging.info(event)
     job_input = event["input"]
-    prompt: str = job_input.pop("prompt")
+    prompt: str = prompt_prefix + job_input.pop("prompt") + prompt_suffix
     max_new_tokens = job_input.pop("max_new_tokens", 50)
 
     generator, default_settings = load_model()

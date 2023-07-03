@@ -6,7 +6,7 @@ WORKDIR /data
 
 # Install Python dependencies (Worker Template)
 RUN pip install --upgrade pip && \
-    pip install safetensors==0.3.1 sentencepiece ninja huggingface_hub runpod numpy
+    pip install safetensors==0.3.1 sentencepiece huggingface_hub runpod
 RUN git clone https://github.com/turboderp/exllama
 RUN pip install -r exllama/requirements.txt
 
@@ -15,6 +15,8 @@ COPY __init.py__ /data/__init__.py
 
 ENV PYTHONPATH=/data/exllama
 ENV MODEL_REPO=""
+ENV PROMPT_PREFIX=""
+ENV PROMPT_SUFFIX=""
 ENV HUGGINGFACE_HUB_CACHE="/runpod-volume/huggingface-cache/hub"
 ENV TRANSFORMERS_CACHE="/runpod-volume/huggingface-cache/hub"
 
