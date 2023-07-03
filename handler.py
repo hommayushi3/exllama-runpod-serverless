@@ -10,9 +10,6 @@ from copy import copy
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 
-generator = None
-default_settings = None
-
 def load_model():
     global generator, default_settings
 
@@ -36,14 +33,18 @@ def load_model():
         default_settings = {
             k: getattr(generator.settings, k) for k in dir(generator.settings) if k[:2] != '__'
         }
-    return generator
+    return generator, default_settings
 
+generator = None
+default_settings = None
 
 def inference(event) -> str:
     logging.info(event)
     job_input = event["input"]
     prompt: str = job_input.pop("prompt")
     max_new_tokens = job_input.pop("max_new_tokens", 50)
+
+    generator, default_settings = load_model()
 
     settings = copy(default_settings)
     settings.update(job_input)
