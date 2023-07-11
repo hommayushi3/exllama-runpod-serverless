@@ -1,34 +1,51 @@
 # exllama-runpod-serverless
+
+> [LLaMA](https://ai.facebook.com/blog/large-language-model-llama-meta-ai/) [GPTQ](https://arxiv.org/abs/2210.17323) models with fast [ExLlama](https://github.com/turboderp/exllama) inference on [RunPod Serverless GPUs](https://www.runpod.io/serverless-gpu)
+
 ## Summary
 This Docker image runs a Llama model on a serverless RunPod instance using the optimized [turboderp's exllama repo](https://github.com/turboderp/exllama). This [repo](https://github.com/hommayushi3/exllama-runpod-serverless) was implemented as a fork off of [poisson-fish's exllama-ultralm13 repo](https://github.com/poisson-fish/exllama-ultralm13).
 
 ## Set Up
 1. Create a RunPod account and navigate to the [RunPod Serverless Console](https://www.runpod.io/console/serverless).
-2. Navigate to My Templates and click on the New Template button.
-3. Enter in the following fields and click on the Save Template button:
-    - Template Name: exllama-runpod-serverless
-    - Container Image: hommayushi3/exllama-runpod-serverless:latest
-    - Container Disk: A size large enough to store your libraries + your desired model in 4bit.
-        - 7B parameters -> 6GB
-        - 13B parameters -> 9GB
-        - 33B parameters -> 19GB
-        - 65GB parameters -> 35GB
-    - Environment Variables: (key, value) pairs
-        - (MODEL_REPO, 'TheBloke/airoboros-7B-gpt4-1.4-GPTQ') or any other repo for GPTQ Llama model. See https://huggingface.co/models?other=llama&sort=trending&search=thebloke+gptq for other models.
-        - optional - (PROMPT_PREFIX, 'USER: ')
-        - optional - (PROMPT_SUFFIX, ' ASSISTANT: ')
-4. Now click on My Endpoints and click on the New Endpoint button.
-5. Fill in the following fields and click on the Create button:
-    - Endpoint Name: exllama-runpod-serverless
-    - Select Template: exllama-runpod-serverless
-    - Min Provisioned Workers: 0
-    - Max Workers: 1
-    - Idle Timeout: 5
-    - Check the FlashBoot checkbox
-    - Use the Container Disk section of step 3 to determine the smallest GPU that can load the entire 4 bit model. In our example's case, use 16 GB GPU.
+2. Navigate to `My Templates` and click on the `New Template` button.
+3. Enter in the following fields and click on the `Save Template` button:
+
+    | Template Field | Value |
+    | --- | --- |
+    | Template Name | `exllama-runpod-serverless` |
+    | Container Image | `hommayushi3/exllama-runpod-serverless:latest` |
+    | Container Disk | A size large enough to store your libraries + your desired model in 4bit. |
+
+    - Container Disk Size Guide:
+        | Model Parameters | Storage & VRAM |
+        | --- | --- |
+        | 7B | 6GB |
+        | 13B | 9GB |
+        | 33B | 19GB |
+        | 65B | 35GB |
+
+    - Environment Variables:
+
+        | Environment Variable | Example Value |
+        | --- | --- |
+        | (Required) `MODEL_REPO` | `TheBloke/airoboros-7B-gpt4-1.4-GPTQ` or any other repo for GPTQ Llama model. See https://huggingface.co/models?other=llama&sort=trending&search=thebloke+gptq for other models. Must have `.safetensors` file(s). |
+        | (Optional) `PROMPT_PREFIX` | `"USER: "` |
+        | (Optional) `PROMPT_SUFFIX` | `"ASSISTANT: "` |
+
+4. Now click on `My Endpoints` and click on the `New Endpoint` button.
+5. Fill in the following fields and click on the `Create` button:
+    | Endpoint Field | Value |
+    | --- | --- |
+    | Endpoint Name | `exllama-runpod-serverless` |
+    | Select Template | `exllama-runpod-serverless` |
+    | Min Provisioned Workers | `0` |
+    | Max Workers | `1` |
+    | Idle Timeout | `5` seconds |
+    | FlashBoot | Checked/Enabled |
+    | GPU Type(s) | Use the `Container Disk` section of step 3 to determine the smallest GPU that can load the entire 4 bit model. In our example's case, use 16 GB GPU. |
 
 ## Inference Usage
-See the predict.py file for an example. For convenience we also copy the code below.
+See the `predict.py` file for an example. For convenience we also copy the code below.
 
 ```py
 import os
