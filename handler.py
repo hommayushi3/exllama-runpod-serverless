@@ -18,7 +18,10 @@ def load_model():
         tokenizer_path = os.path.join(model_directory, "tokenizer.model")
         model_config_path = os.path.join(model_directory, "config.json")
         st_pattern = os.path.join(model_directory, "*.safetensors")
-        model_path = glob.glob(st_pattern)[0]
+        st_files = glob.glob(st_pattern)
+        if not st_files:
+            raise ValueError(f"No safetensors files found in {model_directory}")
+        model_path = st_files[0]
 
         # Create config, model, tokenizer and generator
         config = ExLlamaConfig(model_config_path)               # create config from config.json
@@ -42,6 +45,9 @@ prompt_suffix = os.getenv("PROMPT_SUFFIX", "")
 def inference(event) -> str:
     logging.info(event)
     job_input = event["input"]
+    if not job_input:
+        raise ValueError("No input provided")
+
     prompt: str = prompt_prefix + job_input.pop("prompt") + prompt_suffix
     max_new_tokens = job_input.pop("max_new_tokens", 50)
 
