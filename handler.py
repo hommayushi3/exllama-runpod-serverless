@@ -94,6 +94,6 @@ def inference(event) -> Union[str, Generator[str, None, None]]:
             yield res
     else:
         output_text = generator.generate_simple(prompt, max_new_tokens = max_new_tokens)
-        yield output_text[len(prompt):]
+        return output_text[len(prompt):]
 
 runpod.serverless.start({"handler": inference})
