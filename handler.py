@@ -26,6 +26,10 @@ def load_model():
         # Create config, model, tokenizer and generator
         config = ExLlamaConfig(model_config_path)               # create config from config.json
         config.model_path = model_path                          # supply path to model weights file
+        alpha_value = int(os.getenv("ALPHA_VALUE", "1"))
+        if alpha_value != 1:
+            config.alpha_value = alpha_value
+            config.calculate_rotary_embedding_base()
 
         model = ExLlama(config)                                 # create ExLlama instance and load the weights
         tokenizer = ExLlamaTokenizer(tokenizer_path)            # create tokenizer from tokenizer model file
