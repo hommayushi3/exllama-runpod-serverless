@@ -3,7 +3,7 @@
 > [LLaMA](https://ai.facebook.com/blog/large-language-model-llama-meta-ai/) [GPTQ](https://arxiv.org/abs/2210.17323) models with fast [ExLlama](https://github.com/turboderp/exllama) inference on [RunPod Serverless GPUs](https://www.runpod.io/serverless-gpu)
 
 ## Summary
-This Docker image runs a Llama model on a serverless RunPod instance using the optimized [turboderp's exllama repo](https://github.com/turboderp/exllama). This [repo](https://github.com/hommayushi3/exllama-runpod-serverless) was implemented as a fork off of [poisson-fish's exllama-ultralm13 repo](https://github.com/poisson-fish/exllama-ultralm13).
+This Docker image runs a Llama model on a serverless RunPod instance using the optimized [turboderp's exllama repo](https://github.com/turboderp/exllama).
 
 ## Set Up
 1. Create a RunPod account and navigate to the [RunPod Serverless Console](https://www.runpod.io/console/serverless).
