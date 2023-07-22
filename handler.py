@@ -3,7 +3,7 @@ from tokenizer import ExLlamaTokenizer
 from generator import ExLlamaGenerator
 import os, glob
 import logging
-from typing import Generator
+from typing import Generator, Union
 import runpod
 from huggingface_hub import snapshot_download
 from copy import copy
@@ -42,7 +42,31 @@ default_settings = None
 prompt_prefix = os.getenv("PROMPT_PREFIX", "")
 prompt_suffix = os.getenv("PROMPT_SUFFIX", "")
 
-def inference(event) -> str:
+def generate_with_streaming(prompt, max_new_tokens):
+    global generator
+    generator.end_beam_search()
+
+    # Tokenizing the input
+    ids = generator.tokenizer.encode(prompt)
+    ids = ids[:, -generator.model.config.max_seq_len:]
+
+    generator.gen_begin_reuse(ids)
+    initial_len = generator.sequence[0].shape[0]
+    has_leading_space = False
+    for i in range(max_new_tokens):
+        token = generator.gen_single_token()
+        if i == 0 and generator.tokenizer.tokenizer.IdToPiece(int(token)).startswith('▁'):
+            has_leading_space = True
+
+        decoded_text = generator.tokenizer.decode(generator.sequence[0][initial_len:])
+        if has_leading_space:
+            decoded_text = ' ' + decoded_text
+
+        yield decoded_text
+        if token.item() == generator.tokenizer.eos_token_id:
+            break
+
+def inference(event) -> Union[str, Generator[str, None, None]]:
     logging.info(event)
     job_input = event["input"]
     if not job_input:
@@ -50,6 +74,7 @@ def inference(event) -> str:
 
     prompt: str = prompt_prefix + job_input.pop("prompt") + prompt_suffix
     max_new_tokens = job_input.pop("max_new_tokens", 50)
+    stream: bool = job_input.pop("stream", False)
 
     generator, default_settings = load_model()
 
@@ -58,7 +83,12 @@ def inference(event) -> str:
     for key, value in settings.items():
         setattr(generator.settings, key, value)
 
-    output = generator.generate_simple(prompt, max_new_tokens = max_new_tokens)
-    return output[len(prompt):]
+    if stream:
+        output: Union[str, Generator[str, None, None]] = generate_with_streaming(prompt, max_new_tokens)
+        for res in output:
+            yield res
+    else:
+        output_text = generator.generate_simple(prompt, max_new_tokens = max_new_tokens)
+        yield output_text[len(prompt):]
 
 runpod.serverless.start({"handler": inference})

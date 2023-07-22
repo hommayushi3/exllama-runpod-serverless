@@ -129,3 +129,5 @@ Run the above code using the following command in terminal with the runpoint end
 RUNPOD_AI_API_KEY='**************' RUNPOD_ENDPOINT_ID='*******' python predict.py
 ```
 You can generate the API key [here](https://www.runpod.io/console/serverless/user/settings) under API Keys.
+
+For an example of streaming the output, see `predict_stream.py`.
