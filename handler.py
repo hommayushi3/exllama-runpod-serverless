@@ -91,7 +91,7 @@ def inference(event) -> Union[str, Generator[str, None, None]]:
     if stream:
         output: Union[str, Generator[str, None, None]] = generate_with_streaming(prompt, max_new_tokens)
         for res in output:
-            yield res
+            return res
     else:
         output_text = generator.generate_simple(prompt, max_new_tokens = max_new_tokens)
         return output_text[len(prompt):]
