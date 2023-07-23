@@ -2,21 +2,23 @@ import os
 import requests
 from time import sleep
 import logging
+import argparse
+import sys
 
 endpoint_id = os.environ["RUNPOD_ENDPOINT_ID"]
 URI = f"https://api.runpod.ai/v2/{endpoint_id}/run"
 
 
-def run(prompt):
+def run(prompt, stream=False):
     request = {
         'prompt': prompt,
-        'max_new_tokens': 500,
+        'max_new_tokens': 1800,
         'temperature': 0.3,
         'top_k': 50,
         'top_p': 0.7,
         'repetition_penalty': 1.2,
         'batch_size': 8,
-        'stop': ['</s>']
+        'stream': stream
     }
 
     response = requests.post(URI, json=dict(input=request), headers = {
@@ -26,26 +28,39 @@ def run(prompt):
     if response.status_code == 200:
         data = response.json()
         task_id = data.get('id')
-        return stream_output(task_id)
+        return stream_output(task_id, stream=stream)
 
 
-def stream_output(task_id):
+def stream_output(task_id, stream=False):
     try:
-        url = f"https://api.runpod.ai/v2/{endpoint_id}/status/{task_id}"
+        url = f"https://api.runpod.ai/v2/{endpoint_id}/stream/{task_id}"
         headers = {
             "Authorization": f"Bearer {os.environ['RUNPOD_AI_API_KEY']}"
         }
+
+        previous_output = ''
 
         while True:
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 data = response.json()
+                if stream:
+                    if len(data['stream']) > 0:
+                        new_output = data['stream'][0]['output']
+
+                        sys.stdout.write(new_output[len(previous_output):])
+                        sys.stdout.flush()
+                        previous_output = new_output
+                elif len(data['stream']) > 0:
+                    return data['stream'][0]['output']
+                
                 if data.get('status') == 'COMPLETED':
-                    return data['output']
+                    break
+                    
             elif response.status_code >= 400:
                 logging.error(response.json())
-            # Sleep for 0.5 seconds between each request
-            sleep(0.5)
+            # Sleep for 0.1 seconds between each request
+            sleep(0.1 if stream else 0.5)
     except Exception as e:
         print(e)
         cancel_task(task_id)
@@ -61,6 +76,9 @@ def cancel_task(task_id):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Runpod AI CLI')
+    parser.add_argument('-s', '--stream', action='store_true', help='Stream output')
+
     prompt = """Given the following clinical notes, what tests, diagnoses, and recommendations should the I give? Provide your answer as a detailed report with labeled sections "Diagnostic Tests", "Possible Diagnoses", and "Patient Recommendations".
 
 17-year-old male, has come to the student health clinic complaining of heart pounding. Mr. Cleveland's mother has given verbal consent for a history, physical examination, and treatment
@@ -72,4 +90,4 @@ if __name__ == '__main__':
 -fh:father had MI recently,mother has thyroid dz
 -sh:non-smoker,mariguana 5-6 months ago,3 beers on the weekend, basketball at school
 -sh:no std,no other significant medical conditions."""
-    print(run(prompt))
+    print(run(prompt, stream=parser.parse_args().stream))
