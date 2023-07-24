@@ -100,8 +100,8 @@ def inference(event) -> Union[str, Generator[str, None, None]]:
     if not job_input:
         raise ValueError("No input provided")
 
-    prompt: str = prompt_prefix + job_input.pop("prompt") + prompt_suffix
-    max_new_tokens = job_input.pop("max_new_tokens", 50)
+    prompt: str = job_input.pop("prompt_prefix", prompt_prefix) + job_input.pop("prompt") + job_input.pop("prompt_suffix", prompt_suffix)
+    max_new_tokens = job_input.pop("max_new_tokens", 100)
     stream: bool = job_input.pop("stream", False)
 
     generator, default_settings = load_model()
