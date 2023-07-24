@@ -8,6 +8,24 @@ import runpod
 from huggingface_hub import snapshot_download
 from copy import copy
 
+import re
+import codecs
+
+ESCAPE_SEQUENCE_RE = re.compile(r'''
+    ( \\U........      # 8-digit hex escapes
+    | \\u....          # 4-digit hex escapes
+    | \\x..            # 2-digit hex escapes
+    | \\[0-7]{1,3}     # Octal escapes
+    | \\N\{[^}]+\}     # Unicode characters by name
+    | \\[\\'"abfnrtv]  # Single-character escapes
+    )''', re.UNICODE | re.VERBOSE)
+
+def decode_escapes(s):
+    def decode_match(match):
+        return codecs.decode(match.group(0), 'unicode-escape')
+
+    return ESCAPE_SEQUENCE_RE.sub(decode_match, s)
+
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 
 def load_model():
@@ -49,8 +67,8 @@ def load_model():
 
 generator = None
 default_settings = None
-prompt_prefix = os.getenv("PROMPT_PREFIX", "").decode('string_escape')
-prompt_suffix = os.getenv("PROMPT_SUFFIX", "").decode('string_escape')
+prompt_prefix = decode_escapes(os.getenv("PROMPT_PREFIX", ""))
+prompt_suffix = decode_escapes(os.getenv("PROMPT_SUFFIX", ""))
 
 def generate_with_streaming(prompt, max_new_tokens):
     global generator

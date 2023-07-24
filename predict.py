@@ -96,4 +96,4 @@ if __name__ == '__main__':
 -sh:no std,no other significant medical conditions."""
     args = parser.parse_args()
     params = json.loads(args.params_json) if args.params_json else "{}"
-    print(run('\n' + prompt + '\n', params=params, stream=args.stream))
+    print(run(prompt, params=params, stream=args.stream))
