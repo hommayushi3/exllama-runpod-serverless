@@ -49,8 +49,8 @@ def load_model():
 
 generator = None
 default_settings = None
-prompt_prefix = os.getenv("PROMPT_PREFIX", "")
-prompt_suffix = os.getenv("PROMPT_SUFFIX", "")
+prompt_prefix = os.getenv("PROMPT_PREFIX", "").decode('string_escape')
+prompt_suffix = os.getenv("PROMPT_SUFFIX", "").decode('string_escape')
 
 def generate_with_streaming(prompt, max_new_tokens):
     global generator

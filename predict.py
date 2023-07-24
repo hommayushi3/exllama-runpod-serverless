@@ -95,4 +95,5 @@ if __name__ == '__main__':
 -sh:non-smoker,mariguana 5-6 months ago,3 beers on the weekend, basketball at school
 -sh:no std,no other significant medical conditions."""
     args = parser.parse_args()
-    print(run(prompt, params=json.loads(args.params_json), stream=args.stream))
+    params = json.loads(args.params_json) if args.params_json else "{}"
+    print(run('\n' + prompt + '\n', params=params, stream=args.stream))
