@@ -26,6 +26,11 @@ def load_model():
         # Create config, model, tokenizer and generator
         config = ExLlamaConfig(model_config_path)               # create config from config.json
         config.model_path = model_path                          # supply path to model weights file
+
+        gpu_split = os.getenv("GPU_SPLIT", "")
+        if gpu_split:
+            config.set_auto_map(gpu_split)
+            config.gpu_peer_fix = True
         alpha_value = int(os.getenv("ALPHA_VALUE", "1"))
         config.max_seq_len = int(os.getenv("MAX_SEQ_LEN", "2048"))
         if alpha_value != 1:
