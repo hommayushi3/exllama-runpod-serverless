@@ -4,12 +4,13 @@ from time import sleep
 import logging
 import argparse
 import sys
+import json
 
 endpoint_id = os.environ["RUNPOD_ENDPOINT_ID"]
 URI = f"https://api.runpod.ai/v2/{endpoint_id}/run"
 
 
-def run(prompt, stream=False):
+def run(prompt, params={}, stream=False):
     request = {
         'prompt': prompt,
         'max_new_tokens': 1800,
@@ -20,6 +21,8 @@ def run(prompt, stream=False):
         'batch_size': 8,
         'stream': stream
     }
+
+    request.update(params)
 
     response = requests.post(URI, json=dict(input=request), headers = {
         "Authorization": f"Bearer {os.environ['RUNPOD_AI_API_KEY']}"
@@ -78,6 +81,7 @@ def cancel_task(task_id):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runpod AI CLI')
     parser.add_argument('-s', '--stream', action='store_true', help='Stream output')
+    parser.add_argument('-p', '--params_json', type=str, help='JSON string of generation params')
 
     prompt = """Given the following clinical notes, what tests, diagnoses, and recommendations should the I give? Provide your answer as a detailed report with labeled sections "Diagnostic Tests", "Possible Diagnoses", and "Patient Recommendations".
 
@@ -90,4 +94,5 @@ if __name__ == '__main__':
 -fh:father had MI recently,mother has thyroid dz
 -sh:non-smoker,mariguana 5-6 months ago,3 beers on the weekend, basketball at school
 -sh:no std,no other significant medical conditions."""
-    print(run(prompt, stream=parser.parse_args().stream))
+    args = parser.parse_args()
+    print(run(prompt, params=json.loads(args.params_json), stream=args.stream))

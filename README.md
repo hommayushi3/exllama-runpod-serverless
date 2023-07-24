@@ -150,8 +150,8 @@ Run the above code using the following command in terminal with the runpoint end
 ```bash
 RUNPOD_AI_API_KEY='**************' RUNPOD_ENDPOINT_ID='*******' python predict.py
 ```
-To run with streaming enabled, use the '--stream' option:
+To run with streaming enabled, use the `--stream` option. To set generation parameters, use the `--params_json` option to pass a JSON string of parameters:
 ```bash
-RUNPOD_AI_API_KEY='**************' RUNPOD_ENDPOINT_ID='*******' python predict.py --stream
+RUNPOD_AI_API_KEY='**************' RUNPOD_ENDPOINT_ID='*******' python predict.py --stream --params_json '{"temperature": 0.9, "max_new_tokens": 2048}'
 ```
 You can generate the API key [here](https://www.runpod.io/console/serverless/user/settings) under API Keys.
