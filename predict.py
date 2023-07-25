@@ -54,7 +54,6 @@ def stream_output(task_id, stream=False):
                         sys.stdout.write(new_output[len(previous_output):])
                         sys.stdout.flush()
                         previous_output = new_output
-                elif len(data['stream']) > 0:
                     return data['stream'][0]['output']
                 
                 if data.get('status') == 'COMPLETED':
