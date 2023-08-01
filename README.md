@@ -17,6 +17,7 @@ This Docker image runs a Llama model on a serverless RunPod instance using the o
     | Container Disk | A size large enough to store your libraries + your desired model in 4bit. |
 
     - Container Disk Size Guide:
+
         | Model Parameters | Storage & VRAM |
         | --- | --- |
         | 7B | 6GB |
@@ -27,13 +28,14 @@ This Docker image runs a Llama model on a serverless RunPod instance using the o
 
     - Environment Variables:
 
-        | Environment Variable | Example Value |
-        | --- | --- |
-        | (Required) `MODEL_REPO` | `TheBloke/airoboros-7B-gpt4-1.4-GPTQ` or any other repo for GPTQ Llama model. See https://huggingface.co/models?other=llama&sort=trending&search=thebloke+gptq for other models. Must have `.safetensors` file(s). |
-        | (Optional) `PROMPT_PREFIX` | `"USER: "` |
-        | (Optional) `PROMPT_SUFFIX` | `"ASSISTANT: "` |
-        | (Optional) `MAX_SEQ_LEN` | `4096` |
-        | (Optional) `ALPHA_VALUE` | `1` |
+        | Environment Variable | Example Value                                                                                                                                                                                                           |
+        | --- |-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+        | (Required) `MODEL_REPO` | `TheBloke/airoboros-7B-gpt4-1.4-GPTQ` or any other repo for GPTQ Llama model.<br/> See https://huggingface.co/models?other=llama&sort=trending&search=thebloke+gptq for other models. Must have `.safetensors` file(s). |
+        | (Optional) `MODEL_REVISION` | Branch for files revision. Contains different model options, mainly different quantization. Default: `main`Examples: `gptq-4bit-32g-actorder_True`                                                                                                   |
+        | (Optional) `PROMPT_PREFIX` | `"USER: "`                                                                                                                                                                                                              |
+        | (Optional) `PROMPT_SUFFIX` | `"ASSISTANT: "`                                                                                                                                                                                                         |
+        | (Optional) `MAX_SEQ_LEN` | `4096`                                                                                                                                                                                                                  |
+        | (Optional) `ALPHA_VALUE` | `1`                                                                                                                                                                                                                     |
 
 4. Now click on `My Endpoints` and click on the `New Endpoint` button.
 5. Fill in the following fields and click on the `Create` button:
