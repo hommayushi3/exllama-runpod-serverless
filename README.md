@@ -9,7 +9,9 @@ This Docker image runs a Llama model on a serverless RunPod instance using the o
 1. Create a RunPod account and navigate to the [RunPod Serverless Console](https://www.runpod.io/console/serverless).
 2. (Optional) Create a Network Volume to cache your model to speed up cold starts (but will incur some cost per hour for storage).
     - *Note: Only certain Network Volume regions are compatible with certain instance types on RunPod, so try out if your Network Volume makes your desired instance type Unavailable, try other regions for your Network Volume.*
-    ![70B Network Volume Configuration Example](artifacts/yh_runpod_network_volume_screenshot.png)
+
+![70B Network Volume Configuration Example](artifacts/yh_runpod_network_volume_screenshot.png)
+
 3. Navigate to `My Templates` and click on the `New Template` button.
 4. Enter in the following fields and click on the `Save Template` button:
 
@@ -39,7 +41,9 @@ This Docker image runs a Llama model on a serverless RunPod instance using the o
         | (Optional) `ALPHA_VALUE` | `1` |
         | (If using Network Volumes) `HUGGINGFACE_HUB_CACHE` | `/runpod-volume/hub` |
         | (If using Network Volumes) `TRANSFORMERS_CACHE` | `/runpod-volume/hub` |
-    ![Airoboros 70B Template Configuration Example](artifacts/yh_airoboros_70b_template_screenshot)
+
+![Airoboros 70B Template Configuration Example](artifacts/yh_airoboros_70b_template_screenshot.png)
+
 4. Now click on `My Endpoints` and click on the `New Endpoint` button.
 5. Fill in the following fields and click on the `Create` button:
     | Endpoint Field | Value |
@@ -52,7 +56,9 @@ This Docker image runs a Llama model on a serverless RunPod instance using the o
     | FlashBoot | Checked/Enabled |
     | GPU Type(s) | Use the `Container Disk` section of step 3 to determine the smallest GPU that can load the entire 4 bit model. In our example's case, use 16 GB GPU. Make smaller if using Network Volume instead. |
     | (Optional) Network Volume | `airoboros-7b` |
-    ![Airoboros 70B Template Configuration Example](artifacts/yh_airoboros_70b_template_screenshot)
+
+![Airoboros 70B Template Configuration Example](artifacts/yh_airoboros_70b_template_screenshot.png)
+
 ## Inference Usage
 See the `predict.py` file for an example. For convenience we also copy the code below.
 
