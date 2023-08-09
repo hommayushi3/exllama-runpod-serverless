@@ -110,8 +110,9 @@ def stream_output(task_id, stream=False):
                 if len(data['stream']) > 0:
                     new_output = data['stream'][0]['output']
 
-                    sys.stdout.write(new_output[len(previous_output):])
-                    sys.stdout.flush()
+                    if stream:
+                        sys.stdout.write(new_output[len(previous_output):])
+                        sys.stdout.flush()
                     previous_output = new_output
                 
                 if data.get('status') == 'COMPLETED':
@@ -159,7 +160,6 @@ if __name__ == '__main__':
     start = time.time()
     print(run(prompt, params=params, stream=args.stream))
     print("Time taken: ", time.time() - start, " seconds")
-
 ```
 
 Run the above code using the following command in terminal with the runpoint endpoint id assigned to your endpoint in step 5.
