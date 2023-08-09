@@ -7,8 +7,11 @@ This Docker image runs a Llama model on a serverless RunPod instance using the o
 
 ## Set Up
 1. Create a RunPod account and navigate to the [RunPod Serverless Console](https://www.runpod.io/console/serverless).
-2. Navigate to `My Templates` and click on the `New Template` button.
-3. Enter in the following fields and click on the `Save Template` button:
+2. (Optional) Create a Network Volume to cache your model to speed up cold starts (but will incur some cost per hour for storage).
+    - *Note: Only certain Network Volume regions are compatible with certain instance types on RunPod, so try out if your Network Volume makes your desired instance type Unavailable, try other regions for your Network Volume.*
+    ![70B Network Volume Configuration Example](artifacts/yh_runpod_network_volume_screenshot.png)
+3. Navigate to `My Templates` and click on the `New Template` button.
+4. Enter in the following fields and click on the `Save Template` button:
 
     | Template Field | Value |
     | --- | --- |
@@ -34,7 +37,9 @@ This Docker image runs a Llama model on a serverless RunPod instance using the o
         | (Optional) `PROMPT_SUFFIX` | `"ASSISTANT: "` |
         | (Optional) `MAX_SEQ_LEN` | `4096` |
         | (Optional) `ALPHA_VALUE` | `1` |
-
+        | (If using Network Volumes) `HUGGINGFACE_HUB_CACHE` | `/runpod-volume/hub` |
+        | (If using Network Volumes) `TRANSFORMERS_CACHE` | `/runpod-volume/hub` |
+    ![Airoboros 70B Template Configuration Example](artifacts/yh_airoboros_70b_template_screenshot)
 4. Now click on `My Endpoints` and click on the `New Endpoint` button.
 5. Fill in the following fields and click on the `Create` button:
     | Endpoint Field | Value |
@@ -45,8 +50,9 @@ This Docker image runs a Llama model on a serverless RunPod instance using the o
     | Max Workers | `1` |
     | Idle Timeout | `5` seconds |
     | FlashBoot | Checked/Enabled |
-    | GPU Type(s) | Use the `Container Disk` section of step 3 to determine the smallest GPU that can load the entire 4 bit model. In our example's case, use 16 GB GPU. |
-
+    | GPU Type(s) | Use the `Container Disk` section of step 3 to determine the smallest GPU that can load the entire 4 bit model. In our example's case, use 16 GB GPU. Make smaller if using Network Volume instead. |
+    | (Optional) Network Volume | `airoboros-7b` |
+    ![Airoboros 70B Template Configuration Example](artifacts/yh_airoboros_70b_template_screenshot)
 ## Inference Usage
 See the `predict.py` file for an example. For convenience we also copy the code below.
 
@@ -57,12 +63,13 @@ from time import sleep
 import logging
 import argparse
 import sys
+import json
 
 endpoint_id = os.environ["RUNPOD_ENDPOINT_ID"]
 URI = f"https://api.runpod.ai/v2/{endpoint_id}/run"
 
 
-def run(prompt, stream=False):
+def run(prompt, params={}, stream=False):
     request = {
         'prompt': prompt,
         'max_new_tokens': 1800,
@@ -73,6 +80,8 @@ def run(prompt, stream=False):
         'batch_size': 8,
         'stream': stream
     }
+
+    request.update(params)
 
     response = requests.post(URI, json=dict(input=request), headers = {
         "Authorization": f"Bearer {os.environ['RUNPOD_AI_API_KEY']}"
@@ -85,35 +94,35 @@ def run(prompt, stream=False):
 
 
 def stream_output(task_id, stream=False):
+    # try:
+    url = f"https://api.runpod.ai/v2/{endpoint_id}/stream/{task_id}"
+    headers = {
+        "Authorization": f"Bearer {os.environ['RUNPOD_AI_API_KEY']}"
+    }
+
+    previous_output = ''
+
     try:
-        url = f"https://api.runpod.ai/v2/{endpoint_id}/stream/{task_id}"
-        headers = {
-            "Authorization": f"Bearer {os.environ['RUNPOD_AI_API_KEY']}"
-        }
-
-        previous_output = ''
-
         while True:
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 data = response.json()
-                if stream:
-                    if len(data['stream']) > 0:
-                        new_output = data['stream'][0]['output']
+                if len(data['stream']) > 0:
+                    new_output = data['stream'][0]['output']
 
-                        sys.stdout.write(new_output[len(previous_output):])
-                        sys.stdout.flush()
-                        previous_output = new_output
-                elif len(data['stream']) > 0:
-                    return data['stream'][0]['output']
+                    sys.stdout.write(new_output[len(previous_output):])
+                    sys.stdout.flush()
+                    previous_output = new_output
                 
                 if data.get('status') == 'COMPLETED':
+                    if not stream:
+                        return previous_output
                     break
                     
             elif response.status_code >= 400:
-                logging.error(response.json())
+                print(response)
             # Sleep for 0.1 seconds between each request
-            sleep(0.1 if stream else 0.5)
+            sleep(0.1 if stream else 1)
     except Exception as e:
         print(e)
         cancel_task(task_id)
@@ -131,6 +140,7 @@ def cancel_task(task_id):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Runpod AI CLI')
     parser.add_argument('-s', '--stream', action='store_true', help='Stream output')
+    parser.add_argument('-p', '--params_json', type=str, help='JSON string of generation params')
 
     prompt = """Given the following clinical notes, what tests, diagnoses, and recommendations should the I give? Provide your answer as a detailed report with labeled sections "Diagnostic Tests", "Possible Diagnoses", and "Patient Recommendations".
 
@@ -143,7 +153,13 @@ if __name__ == '__main__':
 -fh:father had MI recently,mother has thyroid dz
 -sh:non-smoker,mariguana 5-6 months ago,3 beers on the weekend, basketball at school
 -sh:no std,no other significant medical conditions."""
-    print(run(prompt, stream=parser.parse_args().stream))
+    args = parser.parse_args()
+    params = json.loads(args.params_json) if args.params_json else "{}"
+    import time
+    start = time.time()
+    print(run(prompt, params=params, stream=args.stream))
+    print("Time taken: ", time.time() - start, " seconds")
+
 ```
 
 Run the above code using the following command in terminal with the runpoint endpoint id assigned to your endpoint in step 5.
@@ -152,6 +168,6 @@ RUNPOD_AI_API_KEY='**************' RUNPOD_ENDPOINT_ID='*******' python predict.p
 ```
 To run with streaming enabled, use the `--stream` option. To set generation parameters, use the `--params_json` option to pass a JSON string of parameters:
 ```bash
-RUNPOD_AI_API_KEY='**************' RUNPOD_ENDPOINT_ID='*******' python predict.py --stream --params_json '{"temperature": 0.9, "max_new_tokens": 2048}'
+RUNPOD_AI_API_KEY='**************' RUNPOD_ENDPOINT_ID='*******' python predict.py --params_json '{"temperature": 0.3, "max_tokens": 1000, "prompt_prefix": "USER: ", "prompt_suffix": "ASSISTANT: "}'
 ```
 You can generate the API key [here](https://www.runpod.io/console/serverless/user/settings) under API Keys.
