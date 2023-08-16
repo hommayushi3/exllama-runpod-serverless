@@ -35,34 +35,36 @@ def run(prompt, params={}, stream=False):
 
 
 def stream_output(task_id, stream=False):
+    # try:
+    url = f"https://api.runpod.ai/v2/{endpoint_id}/stream/{task_id}"
+    headers = {
+        "Authorization": f"Bearer {os.environ['RUNPOD_AI_API_KEY']}"
+    }
+
+    previous_output = ''
+
     try:
-        url = f"https://api.runpod.ai/v2/{endpoint_id}/stream/{task_id}"
-        headers = {
-            "Authorization": f"Bearer {os.environ['RUNPOD_AI_API_KEY']}"
-        }
-
-        previous_output = ''
-
         while True:
             response = requests.get(url, headers=headers)
             if response.status_code == 200:
                 data = response.json()
-                if stream:
-                    if len(data['stream']) > 0:
-                        new_output = data['stream'][0]['output']
+                if len(data['stream']) > 0:
+                    new_output = data['stream'][0]['output']
 
+                    if stream:
                         sys.stdout.write(new_output[len(previous_output):])
                         sys.stdout.flush()
-                        previous_output = new_output
-                    return data['stream'][0]['output']
+                    previous_output = new_output
                 
                 if data.get('status') == 'COMPLETED':
+                    if not stream:
+                        return previous_output
                     break
                     
             elif response.status_code >= 400:
-                logging.error(response.json())
+                print(response)
             # Sleep for 0.1 seconds between each request
-            sleep(0.1 if stream else 0.5)
+            sleep(0.1 if stream else 1)
     except Exception as e:
         print(e)
         cancel_task(task_id)
@@ -95,4 +97,7 @@ if __name__ == '__main__':
 -sh:no std,no other significant medical conditions."""
     args = parser.parse_args()
     params = json.loads(args.params_json) if args.params_json else "{}"
+    import time
+    start = time.time()
     print(run(prompt, params=params, stream=args.stream))
+    print("Time taken: ", time.time() - start, " seconds")
