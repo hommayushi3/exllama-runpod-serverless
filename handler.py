@@ -63,13 +63,13 @@ def load_model():
     generator = ExLlamaAltGenerator(model, tokenizer, cache)
     default_sampling_settings = DefaultExLlamaAltGeneratorSamplingSettings()
     default_stopping_settings = DefaultExLlamaAltGeneratorStoppingSettings()
-    for key, value in default_stopping_settings.dict().items():
+    for key, value in default_stopping_settings.model_dump().items():
         try:
             setattr(generator.settings, key, value)
         except AttributeError:
             warnings.warn(f"Could not set {key} to {value} in generator settings.")
 
-    for key, value in default_stopping_settings.dict().items():
+    for key, value in default_stopping_settings.model_dump().items():
         try:
             setattr(generator, key, value)
         except AttributeError:
@@ -83,7 +83,6 @@ def validate_arguments(kwargs: Dict[str, Any], expected_args: List[str], functio
             warnings.warn(f"Unknown argument {key} for {function_name}. Ignoring.")
             kwargs.pop(key)
 
-
 def inference(event) -> Union[str, Generator[str, None, None]]:
     logging.info(event)
     job_input = event["input"]
@@ -94,7 +93,7 @@ def inference(event) -> Union[str, Generator[str, None, None]]:
     if "prompt" not in job_input:
         raise ValueError("No prompt provided.")
 
-    sampling_params = generator.settings.dict()
+    sampling_params = generator.settings.__dict__
     sampling_params.update(job_input.pop("sampling_params", {}))
     gen_settings = copy(generator.settings)
     for key, value in sampling_params.items():
