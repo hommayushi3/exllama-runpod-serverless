@@ -59,6 +59,7 @@ class RunpodClient:
             "sampling_params": sampling_params
         }
         input.update(kwargs)
+        print(input)
         json_input = {"input": input}
         response = requests.post(self.run_uri, json=json_input, headers=self.headers)
         if response.status_code == 200:
@@ -98,15 +99,15 @@ if __name__ == '__main__':
 
     client = RunpodClient(
         endpoint_id=os.environ['RUNPOD_ENDPOINT_ID'],
-        system_prefix="",
-        user_prefix="USER: ",
-        assistant_prefix="ASSISTANT: ",
-        message_separator="\n"
+        system_prefix="### System Prompt\n",
+        user_prefix="### User Message\n",
+        assistant_prefix="### Assistant\n",
+        message_separator="\n\n"
     )
     
     args = parser.parse_args()
     start = time.time()
 
-    prompt = """Create a Project Management Python application that has a Task class and an Artifact class that are backed by a SQL db. The Task class should have a name, a description, input Artifacts and output Artifacts (deliverables). The Artifact class should be an abstract class with an acceptance_criteria field, and where the subclasses are a FileArtifact (which has a file_name field and a file type field), TextArtifact (which has a single text field), CodeArtifact (which is a file and a list of lines changed). The acceptance_criteria should be a list of AcceptanceCriterium (which are also Tasks) which has a member function `check_criterium` that takes in the Artifact object and outputs a boolean on whether this criterium is satisfied by the artifact. These criteria could be a suite of pytests, or a function that asks the user to review and validate the artifact, or a function that asks a language model to validate the artifact in some way, etc."""
-    print(client.chat(messages=prompt, sampling_params={}, stream=args.stream))
+    prompt = "What is the capital of New York?"
+    print(client.chat(messages=prompt, sampling_params={"temperature": 0.01}, stream=args.stream))
     print("Time taken: ", time.time() - start, " seconds")

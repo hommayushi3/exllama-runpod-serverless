@@ -7,6 +7,7 @@ from typing import Dict, Union, Generator, Any, List
 from huggingface_hub import snapshot_download
 from settings import ConfigSettings, DefaultExLlamaAltGeneratorSamplingSettings, \
                      DefaultExLlamaAltGeneratorStoppingSettings, ModelSettings
+from copy import copy
 import runpod
 import logging
 import warnings
@@ -27,7 +28,6 @@ default_sampling_settings: DefaultExLlamaAltGeneratorSamplingSettings  # Default
 # To validate arguments to inference function
 BEGIN_STREAM_ARGS = {arg for arg in inspect.getfullargspec(ExLlamaAltGenerator.begin_stream).args if arg not in ["self", "gen_settings"]}
 GENERATE_ARGS = {arg for arg in inspect.getfullargspec(ExLlamaAltGenerator.generate).args if arg not in ["self", "gen_settings"]}
-SETTINGS_ARGS = {arg for arg in inspect.getfullargspec(ExLlamaAltGenerator.Settings).args if arg not in ["self"]}
 
 
 def load_model():
@@ -94,9 +94,15 @@ def inference(event) -> Union[str, Generator[str, None, None]]:
     if "prompt" not in job_input:
         raise ValueError("No prompt provided.")
 
-    sampling_params = job_input.get("sampling_params", {})
-    validate_arguments(sampling_params, SETTINGS_ARGS, "sampling_params")
-    gen_settings = ExLlamaAltGenerator.Settings(**sampling_params)
+    sampling_params = generator.settings.dict()
+    sampling_params.update(job_input.pop("sampling_params", {}))
+    gen_settings = copy(generator.settings)
+    for key, value in sampling_params.items():
+        try:
+            setattr(gen_settings, key, value)
+        except AttributeError:
+            warnings.warn(f"Could not set {key} to {value} in generator settings.")
+    
     generate_params = {
         "prompt": "",
         "stop_conditions": [],
