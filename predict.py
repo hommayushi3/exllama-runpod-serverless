@@ -3,7 +3,6 @@ import requests
 from time import sleep
 import argparse
 import sys
-import json
 from typing import List, Dict
 import time
 
@@ -54,13 +53,13 @@ class RunpodClient:
         self.run(prompt, sampling_params, stream)
     
     def run(self, prompt, sampling_params={}, stream=False, **kwargs):
-        json_input = {
-            "input": {
-                "prompt": prompt,
-                "stream": stream,
-                "sampling_params": sampling_params
-            }.update(kwargs)
+        input = {
+            "prompt": prompt,
+            "stream": stream,
+            "sampling_params": sampling_params
         }
+        input.update(kwargs)
+        json_input = {"input": input}
         response = requests.post(self.run_uri, json=json_input, headers=self.headers)
         if response.status_code == 200:
             data = response.json()
@@ -71,7 +70,7 @@ class RunpodClient:
     def stream_output(self, task_id, stream=False):
         previous_output = ''
         while True:
-            response = requests.get(self.stream_uri, headers=self.headers)
+            response = requests.get(self.stream_uri.format(task_id), headers=self.headers)
             if response.status_code == 200:
                 data = response.json()
                 print(data)

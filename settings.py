@@ -12,22 +12,22 @@ class ModelSettings(BaseSettings):
 class ConfigSettings(BaseSettings):
     """Settings class to hold configuration values. See https://github.com/turboderp/exllama/blob/master/model_init.py args for details."""
     # Do not need to set these with env variables
-    directory: str = Field(default=None, env=False, description="Directory to find model/tokenizer/config files in. Set by snapshot_download.")
+    directory: Optional[str] = Field(default=None, env=False, description="Directory to find model/tokenizer/config files in. Set by snapshot_download.")
     # Optional to specify.
-    model: str = Field(None, description="Model filename in directory. Only specify if exists multiple .safetensors files.", required=True)
+    model: Optional[str] = Field(None, description="Model filename in directory. Only specify if exists multiple .safetensors files.", required=True)
     tokenizer: str = Field("tokenizer.model", description="Tokenizer filename in directory", required=True)
     config: str = Field("config.json", description="Model config filename in directory", required=True)
     
     # Settable by user environment variables
-    gpu_split: str = Field(None, alias="gs", description="Comma-separated list of VRAM (in GB) to use per GPU device for model layers")
+    gpu_split: Optional[str] = Field(None, alias="gs", description="Comma-separated list of VRAM (in GB) to use per GPU device for model layers")
     length: int = Field(2048, alias="l", description="Maximum sequence length")
     compress_pos_emb: float = Field(1.0, alias="cpe", description="Compression factor for positional embeddings")
     alpha: float = Field(1.0, alias="a", description="Alpha for context size extension via embedding extension")
-    theta: float = Field(None, alias="theta", description="Theta (base) for RoPE embeddings")
+    theta: Optional[float] = Field(None, alias="theta", description="Theta (base) for RoPE embeddings")
     
     gpu_peer_fix: bool = Field(False, alias="gpfix", description="Prevent direct copies of data between GPUs")
 
-    flash_attn: str = Field(None, alias="flash", description="Use Flash Attention with specified input length")
+    flash_attn: Optional[str] = Field(None, alias="flash", description="Use Flash Attention with specified input length")
     
     matmul_recons_thd: int = Field(8, alias="mmrt", description="Number of rows at which to use reconstruction and cuBLAS for quant matmul")
     fused_mlp_thd: int = Field(2, alias="fmt", description="Maximum number of rows for which to use fused MLP")
@@ -44,7 +44,7 @@ class ConfigSettings(BaseSettings):
 
     concurrent_streams: bool = Field(False, alias="cs", description="Use concurrent CUDA streams")
     
-    affinity: str = Field(None, alias="aff", description="Sets processor core affinity")
+    affinity: Optional[str] = Field(None, alias="aff", description="Sets processor core affinity")
     
     class Config:
         allow_population_by_field_name = True
