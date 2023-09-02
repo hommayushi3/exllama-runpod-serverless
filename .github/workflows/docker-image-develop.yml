@@ -22,6 +22,9 @@ jobs:
         docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag ${{secrets.DOCKER_USER}}/exllama-runpod-serverless:develop
+
+    - name: Docker tag
+      run: docker tag ${{secrets.DOCKER_USER}}/exllama-runpod-serverless:develop ${{secrets.DOCKER_USER}}/exllama-runpod-serverless:develop
       
     - name: Docker Push
       run: docker push ${{secrets.DOCKER_USER}}/exllama-runpod-serverless
