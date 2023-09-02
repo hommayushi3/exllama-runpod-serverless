@@ -1,5 +1,4 @@
 from model import ExLlama, ExLlamaCache, ExLlamaConfig
-from lora import ExLlamaLora
 from tokenizer import ExLlamaTokenizer
 from alt_generator import ExLlamaAltGenerator
 import torch
