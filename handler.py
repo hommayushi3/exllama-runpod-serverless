@@ -1,122 +1,121 @@
 from model import ExLlama, ExLlamaCache, ExLlamaConfig
+from lora import ExLlamaLora
 from tokenizer import ExLlamaTokenizer
-from generator import ExLlamaGenerator
-import os, glob
-import logging
-from typing import Generator, Union
-import runpod
+from alt_generator import ExLlamaAltGenerator
+import torch
+import model_init
+from typing import Dict, Union, Generator, Any, List
 from huggingface_hub import snapshot_download
-from copy import copy
+from settings import ConfigSettings, DefaultExLlamaAltGeneratorSamplingSettings, \
+                     DefaultExLlamaAltGeneratorStoppingSettings, ModelSettings
+import runpod
+import logging
+import warnings
+import inspect
 
-import re
-import codecs
+logging.basicConfig(level=logging.INFO)
 
-ESCAPE_SEQUENCE_RE = re.compile(r'''
-    ( \\U........      # 8-digit hex escapes
-    | \\u....          # 4-digit hex escapes
-    | \\x..            # 2-digit hex escapes
-    | \\[0-7]{1,3}     # Octal escapes
-    | \\N\{[^}]+\}     # Unicode characters by name
-    | \\[\\'"abfnrtv]  # Single-character escapes
-    )''', re.UNICODE | re.VERBOSE)
 
-def decode_escapes(s):
-    def decode_match(match):
-        return codecs.decode(match.group(0), 'unicode-escape')
+config: ExLlamaConfig                                                  # Config for the model, loaded from config.json
+model: ExLlama                                                         # Model, initialized with ExLlamaConfig
+cache: ExLlamaCache                                                    # Cache for generation, tied to model
+generator: ExLlamaAltGenerator = None                                  # Generator
+tokenizer: ExLlamaTokenizer                                            # Tokenizer
+model_settings: ModelSettings                                          # Model settings
+args: ConfigSettings                                                   # Configuration settings
+default_sampling_settings: DefaultExLlamaAltGeneratorSamplingSettings  # Default sampling settings for generator
 
-    return ESCAPE_SEQUENCE_RE.sub(decode_match, s)
 
-logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
+# To validate arguments to inference function
+BEGIN_STREAM_ARGS = {arg for arg in inspect.getfullargspec(ExLlamaAltGenerator.begin_stream).args if arg not in ["self", "gen_settings"]}
+GENERATE_ARGS = {arg for arg in inspect.getfullargspec(ExLlamaAltGenerator.generate).args if arg not in ["self", "gen_settings"]}
+SETTINGS_ARGS = {arg for arg in inspect.getfullargspec(ExLlamaAltGenerator.Settings).args if arg not in ["self"]}
+
 
 def load_model():
-    global generator, default_settings
+    """Based on init_args from https://github.com/turboderp/exllama/blob/master/example_alt_generator.py, but removes LoRA."""
+    global model, cache, config, generator, tokenizer, default_sampling_settings
 
-    if not generator:
-        model_directory = snapshot_download(repo_id=os.environ["MODEL_REPO"], revision=os.getenv("MODEL_REVISION", "main"))
-        tokenizer_path = os.path.join(model_directory, "tokenizer.model")
-        model_config_path = os.path.join(model_directory, "config.json")
-        st_pattern = os.path.join(model_directory, "*.safetensors")
-        st_files = glob.glob(st_pattern)
-        if not st_files:
-            raise ValueError(f"No safetensors files found in {model_directory}")
-        model_path = st_files[0]
+    # Global initialization
+    torch.set_grad_enabled(False)
+    torch.cuda._lazy_init()
 
-        # Create config, model, tokenizer and generator
-        config = ExLlamaConfig(model_config_path)               # create config from config.json
-        config.model_path = model_path                          # supply path to model weights file
+    model_settings = ModelSettings()
+    args = ConfigSettings()
+    args.directory = snapshot_download(repo_id=model_settings.repo_id, revision=model_settings.revision)
+    model_init.post_parse(args)
+    model_init.get_model_files(args)
 
-        gpu_split = os.getenv("GPU_SPLIT", "")
-        if gpu_split:
-            config.set_auto_map(gpu_split)
-            config.gpu_peer_fix = True
-        alpha_value = int(os.getenv("ALPHA_VALUE", "1"))
-        config.max_seq_len = int(os.getenv("MAX_SEQ_LEN", "2048"))
-        if alpha_value != 1:
-            config.alpha_value = alpha_value
-            config.calculate_rotary_embedding_base()
+    print_opts = []
+    model_init.print_options(args, print_opts)
 
-        model = ExLlama(config)                                 # create ExLlama instance and load the weights
-        tokenizer = ExLlamaTokenizer(tokenizer_path)            # create tokenizer from tokenizer model file
+    # Model globals
+    model_init.set_globals(args)
 
-        cache = ExLlamaCache(model)                             # create cache for inference
-        generator = ExLlamaGenerator(model, tokenizer, cache)   # create generator
-        default_settings = {
-            k: getattr(generator.settings, k) for k in dir(generator.settings) if k[:2] != '__'
-        }
-    return generator, default_settings
+    # Instantiate model and generator
+    config = model_init.make_config(args)
 
-generator = None
-default_settings = None
-prompt_prefix = decode_escapes(os.getenv("PROMPT_PREFIX", ""))
-prompt_suffix = decode_escapes(os.getenv("PROMPT_SUFFIX", ""))
+    model = ExLlama(config)
+    cache = ExLlamaCache(model)
+    tokenizer = ExLlamaTokenizer(args.tokenizer)
 
-def generate_with_streaming(prompt, max_new_tokens):
-    global generator
-    generator.end_beam_search()
+    model_init.print_stats(model)
 
-    # Tokenizing the input
-    ids = generator.tokenizer.encode(prompt)
-    ids = ids[:, -generator.model.config.max_seq_len:]
+    # Generator
+    generator = ExLlamaAltGenerator(model, tokenizer, cache)
+    default_sampling_settings = DefaultExLlamaAltGeneratorSamplingSettings()
+    default_stopping_settings = DefaultExLlamaAltGeneratorStoppingSettings()
+    for key, value in default_stopping_settings.dict().items():
+        try:
+            setattr(generator.settings, key, value)
+        except AttributeError:
+            warnings.warn(f"Could not set {key} to {value} in generator settings.")
 
-    generator.gen_begin_reuse(ids)
-    initial_len = generator.sequence[0].shape[0]
-    has_leading_space = False
-    for i in range(max_new_tokens):
-        token = generator.gen_single_token()
-        if i == 0 and generator.tokenizer.tokenizer.IdToPiece(int(token)).startswith('▁'):
-            has_leading_space = True
+    for key, value in default_stopping_settings.dict().items():
+        try:
+            setattr(generator, key, value)
+        except AttributeError:
+            warnings.warn(f"Could not set {key} to {value} in generator settings.")
 
-        decoded_text = generator.tokenizer.decode(generator.sequence[0][initial_len:])
-        if has_leading_space:
-            decoded_text = ' ' + decoded_text
 
-        yield decoded_text
-        if token.item() == generator.tokenizer.eos_token_id:
-            break
+def validate_arguments(kwargs: Dict[str, Any], expected_args: List[str], function_name: str):
+    """Validate arguments passed to function."""
+    for key in list(kwargs.keys()):
+        if key not in expected_args:
+            warnings.warn(f"Unknown argument {key} for {function_name}. Ignoring.")
+            kwargs.pop(key)
+
 
 def inference(event) -> Union[str, Generator[str, None, None]]:
     logging.info(event)
     job_input = event["input"]
+    if generator is None:
+        load_model()
     if not job_input:
-        raise ValueError("No input provided")
+        raise ValueError("No input provided.")
+    if "prompt" not in job_input:
+        raise ValueError("No prompt provided.")
 
-    prompt: str = job_input.pop("prompt_prefix", prompt_prefix) + job_input.pop("prompt") + job_input.pop("prompt_suffix", prompt_suffix)
-    max_new_tokens = job_input.pop("max_new_tokens", 100)
-    stream: bool = job_input.pop("stream", False)
+    sampling_params = job_input.get("sampling_params", {})
+    validate_arguments(sampling_params, SETTINGS_ARGS, "sampling_params")
+    gen_settings = ExLlamaAltGenerator.Settings(**sampling_params)
+    if job_input.get("stream", False):
+        validate_arguments(job_input, BEGIN_STREAM_ARGS, "begin_stream")
+        output = generator.begin_stream(
+            gen_settings = gen_settings,
+            **job_input
+        )
+        while True:
+            chunk, eos = output.stream()
+            yield chunk
+            if eos: break
+    else:  # batched prompts
+        validate_arguments(job_input, GENERATE_ARGS, "generate")
+        output = generator.generate(
+            gen_settings = gen_settings,
+            **job_input
+        )
+        yield output
 
-    generator, default_settings = load_model()
 
-    settings = copy(default_settings)
-    settings.update(job_input)
-    for key, value in settings.items():
-        setattr(generator.settings, key, value)
-
-    if stream:
-        output: Union[str, Generator[str, None, None]] = generate_with_streaming(prompt, max_new_tokens)
-        for res in output:
-            yield res
-    else:
-        output_text = generator.generate_simple(prompt, max_new_tokens = max_new_tokens)
-        yield output_text[len(prompt):]
-
-runpod.serverless.start({"handler": inference})
+runpod.serverless.start({"handler": inference, "return_aggregate_stream": True})

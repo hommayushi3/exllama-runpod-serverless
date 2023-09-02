@@ -3,3 +3,5 @@
 predict.py
 README.md
 artifacts
+.DS_Store
+.gitignore

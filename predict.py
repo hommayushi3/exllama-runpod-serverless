@@ -52,7 +52,7 @@ def stream_output(task_id, stream=False):
                     new_output = data['stream'][0]['output']
 
                     if stream:
-                        sys.stdout.write(new_output[len(previous_output):])
+                        sys.stdout.write(new_output)
                         sys.stdout.flush()
                     previous_output = new_output
                 
@@ -64,7 +64,7 @@ def stream_output(task_id, stream=False):
             elif response.status_code >= 400:
                 print(response)
             # Sleep for 0.1 seconds between each request
-            sleep(0.1 if stream else 1)
+            sleep(0.2 if stream else 1)
     except Exception as e:
         print(e)
         cancel_task(task_id)
@@ -84,17 +84,11 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--stream', action='store_true', help='Stream output')
     parser.add_argument('-p', '--params_json', type=str, help='JSON string of generation params')
 
-    prompt = """Given the following clinical notes, what tests, diagnoses, and recommendations should the I give? Provide your answer as a detailed report with labeled sections "Diagnostic Tests", "Possible Diagnoses", and "Patient Recommendations".
+    prompt = """### Instruction:
+Create a Project Management Python application that has a Task class and an Artifact class that are backed by a SQL db. The Task class should have a name, a description, input Artifacts and output Artifacts (deliverables). The Artifact class should be an abstract class with an acceptance_criteria field, and where the subclasses are a FileArtifact (which has a file_name field and a file type field), TextArtifact (which has a single text field), CodeArtifact (which is a file and a list of lines changed). The acceptance_criteria should be a list of AcceptanceCriterium (which are also Tasks) which has a member function `check_criterium` that takes in the Artifact object and outputs a boolean on whether this criterium is satisfied by the artifact. These criteria could be a suite of pytests, or a function that asks the user to review and validate the artifact, or a function that asks a language model to validate the artifact in some way, etc.
 
-17-year-old male, has come to the student health clinic complaining of heart pounding. Mr. Cleveland's mother has given verbal consent for a history, physical examination, and treatment
--began 2-3 months ago,sudden,intermittent for 2 days(lasting 3-4 min),worsening,non-allev/aggrav
--associated with dispnea on exersion and rest,stressed out about school
--reports fe feels like his heart is jumping out of his chest
--ros:denies chest pain,dyaphoresis,wt loss,chills,fever,nausea,vomiting,pedal edeam
--pmh:non,meds :aderol (from a friend),nkda
--fh:father had MI recently,mother has thyroid dz
--sh:non-smoker,mariguana 5-6 months ago,3 beers on the weekend, basketball at school
--sh:no std,no other significant medical conditions."""
+### Response:
+"""
     args = parser.parse_args()
     params = json.loads(args.params_json) if args.params_json else "{}"
     import time
