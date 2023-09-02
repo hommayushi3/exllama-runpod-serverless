@@ -97,22 +97,26 @@ def inference(event) -> Union[str, Generator[str, None, None]]:
     sampling_params = job_input.get("sampling_params", {})
     validate_arguments(sampling_params, SETTINGS_ARGS, "sampling_params")
     gen_settings = ExLlamaAltGenerator.Settings(**sampling_params)
-    if job_input.get("stream", False):
+    generate_params = {
+        "prompt": "",
+        "stop_conditions": [],
+        "max_new_tokens": 512,
+        "gen_settings": gen_settings,
+        "encode_special_characters": False
+    }
+    stream = job_input.pop("stream", False)
+    if stream:
         validate_arguments(job_input, BEGIN_STREAM_ARGS, "begin_stream")
-        output = generator.begin_stream(
-            gen_settings = gen_settings,
-            **job_input
-        )
+        generate_params.update(job_input)
+        output = generator.begin_stream(**generate_params)
         while True:
             chunk, eos = output.stream()
             yield chunk
             if eos: break
     else:  # batched prompts
         validate_arguments(job_input, GENERATE_ARGS, "generate")
-        output = generator.generate(
-            gen_settings = gen_settings,
-            **job_input
-        )
+        generate_params.update(job_input)
+        output = generator.generate(**generate_params)
         yield output
 
 

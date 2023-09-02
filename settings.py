@@ -19,35 +19,32 @@ class ConfigSettings(BaseSettings):
     config: str = Field("config.json", description="Model config filename in directory", required=True)
     
     # Settable by user environment variables
-    gpu_split: Optional[str] = Field(None, alias="gs", description="Comma-separated list of VRAM (in GB) to use per GPU device for model layers")
-    length: int = Field(2048, alias="l", description="Maximum sequence length")
-    compress_pos_emb: float = Field(1.0, alias="cpe", description="Compression factor for positional embeddings")
-    alpha: float = Field(1.0, alias="a", description="Alpha for context size extension via embedding extension")
-    theta: Optional[float] = Field(None, alias="theta", description="Theta (base) for RoPE embeddings")
+    gpu_split: Optional[str] = Field(None, description="Comma-separated list of VRAM (in GB) to use per GPU device for model layers")
+    length: int = Field(2048, description="Maximum sequence length")
+    compress_pos_emb: float = Field(1.0, description="Compression factor for positional embeddings")
+    alpha: float = Field(1.0, description="Alpha for context size extension via embedding extension")
+    theta: Optional[float] = Field(None, description="Theta (base) for RoPE embeddings")
     
-    gpu_peer_fix: bool = Field(False, alias="gpfix", description="Prevent direct copies of data between GPUs")
+    gpu_peer_fix: bool = Field(False, description="Prevent direct copies of data between GPUs")
 
-    flash_attn: Optional[str] = Field(None, alias="flash", description="Use Flash Attention with specified input length")
+    flash_attn: Optional[str] = Field(None, description="Use Flash Attention with specified input length")
     
-    matmul_recons_thd: int = Field(8, alias="mmrt", description="Number of rows at which to use reconstruction and cuBLAS for quant matmul")
-    fused_mlp_thd: int = Field(2, alias="fmt", description="Maximum number of rows for which to use fused MLP")
-    sdp_thd: int = Field(8, alias="sdpt", description="Number of rows at which to switch to scaled_dot_product_attention")
-    matmul_fused_remap: bool = Field(False, alias="mmfr", description="Fuse column remapping in Q4 matmul kernel")
-    no_fused_attn: bool = Field(False, alias="nfa", description="Disable fused attention")
+    matmul_recons_thd: int = Field(8, description="Number of rows at which to use reconstruction and cuBLAS for quant matmul")
+    fused_mlp_thd: int = Field(2, description="Maximum number of rows for which to use fused MLP")
+    sdp_thd: int = Field(8, description="Number of rows at which to switch to scaled_dot_product_attention")
+    matmul_fused_remap: bool = Field(False, description="Fuse column remapping in Q4 matmul kernel")
+    no_fused_attn: bool = Field(False, description="Disable fused attention")
 
-    rmsnorm_no_half2: bool = Field(False, alias="rnnh2", description="Don't use half2 in RMS norm kernel")
-    rope_no_half2: bool = Field(False, alias="rpnh2", description="Don't use half2 in RoPE kernel")
-    matmul_no_half2: bool = Field(False, alias="mmnh2", description="Don't use half2 in Q4 matmul kernel")
-    silu_no_half2: bool = Field(False, alias="snh2", description="Don't use half2 in SiLU kernel")
-    no_half2: bool = Field(False, alias="nh2", description="Disable half2 in all kernels")
-    force_half2: bool = Field(False, alias="fh2", description="Force enable half2 even if unsupported")
+    rmsnorm_no_half2: bool = Field(False, description="Don't use half2 in RMS norm kernel")
+    rope_no_half2: bool = Field(False, description="Don't use half2 in RoPE kernel")
+    matmul_no_half2: bool = Field(False, description="Don't use half2 in Q4 matmul kernel")
+    silu_no_half2: bool = Field(False, description="Don't use half2 in SiLU kernel")
+    no_half2: bool = Field(False, description="Disable half2 in all kernels")
+    force_half2: bool = Field(False, description="Force enable half2 even if unsupported")
 
-    concurrent_streams: bool = Field(False, alias="cs", description="Use concurrent CUDA streams")
+    concurrent_streams: bool = Field(False, description="Use concurrent CUDA streams")
     
-    affinity: Optional[str] = Field(None, alias="aff", description="Sets processor core affinity")
-    
-    class Config:
-        allow_population_by_field_name = True
+    affinity: Optional[str] = Field(None, description="Sets processor core affinity")
 
 
 class DefaultExLlamaAltGeneratorSamplingSettings(BaseSettings):
