@@ -47,6 +47,7 @@ class ConfigSettings(BaseSettings):
     affinity: Optional[str] = Field(None, description="Sets processor core affinity")
 
 
+# ExllamaAltGenerator - for streaming and flexible sampling
 class DefaultExLlamaAltGeneratorSamplingSettings(BaseSettings):
     """Sampling Settings. See https://github.com/turboderp/exllama/blob/master/alt_generator.py for details."""
     
