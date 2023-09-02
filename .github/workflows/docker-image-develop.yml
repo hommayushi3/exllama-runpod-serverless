@@ -27,4 +27,4 @@ jobs:
       run: docker tag ${{secrets.DOCKER_USER}}/exllama-runpod-serverless:develop ${{secrets.DOCKER_USER}}/exllama-runpod-serverless:develop
       
     - name: Docker Push
-      run: docker push ${{secrets.DOCKER_USER}}/exllama-runpod-serverless
+      run: docker push ${{secrets.DOCKER_USER}}/exllama-runpod-serverless:develop
