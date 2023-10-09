@@ -4,10 +4,9 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN mkdir data
 WORKDIR /data
 
-# Install Python dependencies (Worker Template)
+# Install Python dependencies
 RUN pip install --upgrade pip && \
-    pip install safetensors==0.3.1 sentencepiece huggingface_hub \
-        git+https://github.com/winglian/runpod-python.git@fix-generator-check ninja==1.11.1
+    pip install huggingface_hub runpod
 RUN git clone https://github.com/turboderp/exllama
 RUN pip install -r exllama/requirements.txt
 
