@@ -12,6 +12,7 @@ RUN pip install -r exllama/requirements.txt
 
 COPY handler.py /app/handler.py
 
+ENV PYTHONPATH=/app/exllama
 ENV MODEL_REPO=""
 ENV PROMPT_PREFIX=""
 ENV PROMPT_SUFFIX=""

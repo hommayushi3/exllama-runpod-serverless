@@ -1,14 +1,15 @@
-from exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
-from exllama.tokenizer import ExLlamaTokenizer
-from exllama.generator import ExLlamaGenerator
-import os, glob
-from typing import Generator, Union
+import os
+import glob
+import re
+import codecs
 import runpod
 from runpod.serverless.modules.rp_logger import RunPodLogger
 from huggingface_hub import snapshot_download
 from copy import copy
-import re
-import codecs
+from typing import Generator, Union
+from model import ExLlama, ExLlamaCache, ExLlamaConfig
+from tokenizer import ExLlamaTokenizer
+from generator import ExLlamaGenerator
 
 
 ESCAPE_SEQUENCE_RE = re.compile(r'''
@@ -24,8 +25,6 @@ ESCAPE_SEQUENCE_RE = re.compile(r'''
 logger = RunPodLogger()
 generator = None
 default_settings = None
-prompt_prefix = decode_escapes(os.getenv("PROMPT_PREFIX", ""))
-prompt_suffix = decode_escapes(os.getenv("PROMPT_SUFFIX", ""))
 
 
 def decode_escapes(s):
@@ -33,6 +32,10 @@ def decode_escapes(s):
         return codecs.decode(match.group(0), "unicode-escape")
 
     return ESCAPE_SEQUENCE_RE.sub(decode_match, s)
+
+
+prompt_prefix = decode_escapes(os.getenv("PROMPT_PREFIX", ""))
+prompt_suffix = decode_escapes(os.getenv("PROMPT_SUFFIX", ""))
 
 
 def load_model():
